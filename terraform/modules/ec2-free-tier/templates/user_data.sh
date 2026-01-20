@@ -63,29 +63,29 @@ services:
       - sentra-network
 
   frontend:
-    image: ${ECR_REGISTRY}/sentra-frontend:latest
+    image: $${ECR_REGISTRY}/sentra-frontend:latest
     container_name: sentra-frontend
     restart: unless-stopped
     networks:
       - sentra-network
 
   backend:
-    image: ${ECR_REGISTRY}/sentra-backend:latest
+    image: $${ECR_REGISTRY}/sentra-backend:latest
     container_name: sentra-backend
     environment:
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-      - ENVIRONMENT=${ENVIRONMENT}
+      - SUPABASE_URL=$${SUPABASE_URL}
+      - SUPABASE_KEY=$${SUPABASE_KEY}
+      - ENVIRONMENT=$${ENVIRONMENT}
     restart: unless-stopped
     networks:
       - sentra-network
 
   ai-service:
-    image: ${ECR_REGISTRY}/sentra-ai-service:latest
+    image: $${ECR_REGISTRY}/sentra-ai-service:latest
     container_name: sentra-ai-service
     environment:
       - PARKING_API_URL=http://backend:5000
-      - ENVIRONMENT=${ENVIRONMENT}
+      - ENVIRONMENT=$${ENVIRONMENT}
     restart: unless-stopped
     networks:
       - sentra-network
@@ -182,7 +182,7 @@ cd /opt/sentra
 source .env
 
 # Login to ECR
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+aws ecr get-login-password --region $${AWS_REGION} | docker login --username AWS --password-stdin $${ECR_REGISTRY}
 
 # Pull latest images
 docker-compose pull

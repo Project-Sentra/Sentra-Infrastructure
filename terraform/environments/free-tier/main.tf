@@ -112,8 +112,8 @@ module "ec2" {
   vpc_id            = aws_vpc.main.id
   subnet_id         = aws_subnet.public.id
   key_name          = var.key_name
-  instance_type     = "t2.micro"  # Free tier
-  root_volume_size  = 20          # Keep under 30GB free tier
+  instance_type     = "t3.micro"  # Free tier eligible
+  root_volume_size  = 30          # Free tier allows 30GB EBS
   ssh_allowed_cidrs = var.ssh_allowed_cidrs
   ecr_registry      = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.aws_region}.amazonaws.com"
   supabase_url      = var.supabase_url
