@@ -1,0 +1,9 @@
+# Copy this file to terraform.tfvars and fill in the values
+
+aws_region      = "us-east-1"
+project_name    = "sentra"
+environment     = "dev"
+supabase_url    = "https://your-project.supabase.co"
+supabase_key    = "your-supabase-key"
+certificate_arn = ""  # Leave empty for HTTP only, add ACM ARN for HTTPS
+github_org      = "your-github-username"  # For OIDC authentication
