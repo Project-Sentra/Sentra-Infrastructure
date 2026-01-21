@@ -86,6 +86,9 @@ services:
     environment:
       - PARKING_API_URL=http://backend:5000
       - ENVIRONMENT=$${ENVIRONMENT}
+      - MIN_CONFIDENCE=0.5
+      - AUTO_ENTRY_EXIT=false
+      - CAMERA_MODE=live
     restart: unless-stopped
     networks:
       - sentra-network
@@ -154,6 +157,7 @@ server {
 
     # WebSocket for AI Service
     location /ws {
+        rewrite ^/ws /api/ws break;
         proxy_pass http://ai-service;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
