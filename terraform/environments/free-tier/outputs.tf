@@ -8,6 +8,11 @@ output "server_public_dns" {
   value       = module.ec2.public_dns
 }
 
+output "server_instance_id" {
+  description = "EC2 Instance ID (for GitHub Secrets)"
+  value       = module.ec2.instance_id
+}
+
 output "ssh_command" {
   description = "SSH command to connect to server"
   value       = "ssh -i ${var.key_name}.pem ec2-user@${module.ec2.public_ip}"
