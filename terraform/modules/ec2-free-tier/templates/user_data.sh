@@ -50,14 +50,11 @@ services:
     container_name: sentra-nginx
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./config/ssl:/etc/nginx/ssl:ro
     depends_on:
       - frontend
       - backend
-      - ai-service
     restart: unless-stopped
     networks:
       - sentra-network
@@ -100,65 +97,55 @@ COMPOSEFILE
 
 chown sentra:sentra /opt/sentra/docker-compose.yml
 
-# Create Nginx config
+# Create Nginx config (uses runtime DNS resolution so missing services don't block startup)
 mkdir -p /opt/sentra/config
 cat > /opt/sentra/config/nginx.conf << 'NGINXCONF'
-upstream frontend {
-    server frontend:80;
-}
-
-upstream backend {
-    server backend:5000;
-}
-
-upstream ai-service {
-    server ai-service:5001;
-}
+resolver 127.0.0.11 valid=30s ipv6=off;
 
 server {
     listen 80;
     server_name _;
 
-    # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
 
-    # Gzip
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
 
-    # Frontend
     location / {
-        proxy_pass http://frontend;
+        set $frontend_upstream http://sentra-frontend:80;
+        proxy_pass $frontend_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Backend API
     location /api/ {
-        proxy_pass http://backend;
+        set $backend_upstream http://sentra-backend:5000;
+        proxy_pass $backend_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # AI Service API
     location /ai/ {
+        set $ai_upstream http://sentra-ai-service:5001;
         rewrite ^/ai/(.*) /api/$1 break;
-        proxy_pass http://ai-service;
+        proxy_pass $ai_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 
-    # WebSocket for AI Service
     location /ws {
+        set $ws_upstream http://sentra-ai-service:5001;
         rewrite ^/ws /api/ws break;
-        proxy_pass http://ai-service;
+        proxy_pass $ws_upstream;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -166,7 +153,6 @@ server {
         proxy_read_timeout 86400;
     }
 
-    # Health check
     location /health {
         access_log off;
         return 200 "healthy";
