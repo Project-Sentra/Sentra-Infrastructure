@@ -40,3 +40,8 @@ variable "github_org" {
   description = "GitHub organization/username for OIDC"
   type        = string
 }
+
+variable "certificate_arn" {
+  description = "ACM certificate ARN for HTTPS (*.theenuka.xyz)"
+  type        = string
+}

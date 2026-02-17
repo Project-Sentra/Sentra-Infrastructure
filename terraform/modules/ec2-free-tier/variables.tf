@@ -50,3 +50,9 @@ variable "supabase_key" {
   type      = string
   sensitive = true
 }
+
+variable "alb_security_group_id" {
+  description = "Security group ID of the ALB (for restricting EC2 HTTP access)"
+  type        = string
+  default     = ""
+}

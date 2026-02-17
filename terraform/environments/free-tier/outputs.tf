@@ -20,7 +20,12 @@ output "ssh_command" {
 
 output "app_url" {
   description = "Application URL"
-  value       = "http://${module.ec2.public_ip}"
+  value       = "https://sentra.theenuka.xyz"
+}
+
+output "alb_dns_name" {
+  description = "ALB DNS name (use as CNAME value in GoDaddy)"
+  value       = aws_lb.main.dns_name
 }
 
 output "ecr_backend_url" {
