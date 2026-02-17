@@ -6,9 +6,9 @@ terraform {
   required_version = ">= 1.5.0"
 
   backend "s3" {
-    bucket         = "sentra-terraform-state-free"
+    bucket         = "sentra-terraform-state-free-sg"
     key            = "free-tier/terraform.tfstate"
-    region         = "us-east-1"
+    region         = "ap-southeast-1"
     encrypt        = true
     dynamodb_table = "sentra-terraform-locks"
   }
@@ -37,7 +37,7 @@ provider "aws" {
 locals {
   project_name = "sentra"
   environment  = "free"
-  aws_region   = "us-east-1"
+  aws_region   = "ap-southeast-1"
 }
 
 # Get AWS Account ID

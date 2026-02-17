@@ -37,7 +37,7 @@ if ! aws sts get-caller-identity &> /dev/null; then
 fi
 
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-AWS_REGION="${AWS_REGION:-us-east-1}"
+AWS_REGION="${AWS_REGION:-ap-southeast-1}"
 
 echo -e "${GREEN}✓ AWS configured (Account: ${AWS_ACCOUNT_ID})${NC}"
 echo ""
