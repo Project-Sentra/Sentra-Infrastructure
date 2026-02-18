@@ -14,11 +14,10 @@ on:
       environment:
         description: 'Environment'
         required: true
-        default: 'dev'
+        default: 'free-tier'
         type: choice
         options:
-          - dev
-          - prod
+          - free-tier
       action:
         description: 'Action'
         required: true
@@ -61,20 +60,20 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Format Check
-        working-directory: terraform/environments/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/environments/${{ github.event.inputs.environment || 'free-tier' }}
         run: terraform fmt -check -recursive
 
       - name: Terraform Init
-        working-directory: terraform/environments/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/environments/${{ github.event.inputs.environment || 'free-tier' }}
         run: terraform init
 
       - name: Terraform Validate
-        working-directory: terraform/environments/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/environments/${{ github.event.inputs.environment || 'free-tier' }}
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
-        working-directory: terraform/environments/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/environments/${{ github.event.inputs.environment || 'free-tier' }}
         run: |
           terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
           echo "plan<<EOF" >> $GITHUB_OUTPUT
@@ -114,7 +113,7 @@ jobs:
     name: Terraform Apply
     runs-on: ubuntu-latest
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
-    environment: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ github.event.inputs.environment || 'free-tier' }}
 
     steps:
       - name: Checkout
@@ -132,11 +131,11 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Init
-        working-directory: terraform/environments/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/environments/${{ github.event.inputs.environment || 'free-tier' }}
         run: terraform init
 
       - name: Terraform Apply
-        working-directory: terraform/environments/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/environments/${{ github.event.inputs.environment || 'free-tier' }}
         run: terraform apply -auto-approve
         env:
           TF_VAR_supabase_url: ${{ secrets.SUPABASE_URL }}
@@ -144,14 +143,14 @@ jobs:
           TF_VAR_github_org: ${{ github.repository_owner }}
 
       - name: Get outputs
-        working-directory: terraform/environments/${{ github.event.inputs.environment || 'dev' }}
+        working-directory: terraform/environments/${{ github.event.inputs.environment || 'free-tier' }}
         run: terraform output -json > outputs.json
 
       - name: Upload outputs
         uses: actions/upload-artifact@v4
         with:
           name: terraform-outputs
-          path: terraform/environments/${{ github.event.inputs.environment || 'dev' }}/outputs.json
+          path: terraform/environments/${{ github.event.inputs.environment || 'free-tier' }}/outputs.json
 
   # Terraform Destroy (manual only)
   destroy:
