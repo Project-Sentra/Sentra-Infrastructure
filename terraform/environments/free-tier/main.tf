@@ -244,6 +244,8 @@ module "ec2" {
   ecr_registry         = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${local.aws_region}.amazonaws.com"
   supabase_url      = var.supabase_url
   supabase_key      = var.supabase_key
+  service_api_key   = var.service_api_key
+  stripe_secret_key = var.stripe_secret_key
 }
 
 # GitHub Actions OIDC (Free)
