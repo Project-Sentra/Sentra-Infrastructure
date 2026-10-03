@@ -33,6 +33,13 @@ resource "google_compute_subnetwork" "main" {
   region        = var.region
   network       = google_compute_network.main.id
   ip_cidr_range = "10.10.0.0/24"
+
+  # VPC flow logs (sampled to keep them within the free logging allowance)
+  log_config {
+    aggregation_interval = "INTERVAL_10_MIN"
+    flow_sampling        = 0.5
+    metadata             = "INCLUDE_ALL_METADATA"
+  }
 }
 
 # Static external IP so the address (and sslip.io name) survives restarts
