@@ -60,3 +60,8 @@
 
 - name: Apply pending Docker restarts now
   ansible.builtin.meta: flush_handlers
+
+# The existing SSH session keeps its old groups; reconnect so the new
+# docker group membership applies to the deploy tasks that follow.
+- name: Reconnect so the docker group takes effect
+  ansible.builtin.meta: reset_connection
