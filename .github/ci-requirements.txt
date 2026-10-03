@@ -1,0 +1,3 @@
+# Exact versions for the Infrastructure CI (installed from wheels only)
+ansible-core==2.21.4
+ansible-lint==26.9.0

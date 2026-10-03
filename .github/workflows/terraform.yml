@@ -63,7 +63,8 @@ jobs:
           python-version: '3.12'
 
       - name: Install Ansible
-        run: pip install ansible-core ansible-lint
+        run: |
+          pip install --only-binary :all: -r ../.github/ci-requirements.txt
 
       - name: Syntax check
         run: |
