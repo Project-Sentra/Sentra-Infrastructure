@@ -1,0 +1,96 @@
+---
+- name: Check required settings and secrets
+  ansible.builtin.assert:
+    that:
+      - sentra_domain is defined and sentra_domain | length > 0
+      - vault_supabase_url is defined and 'YOUR-PROJECT' not in vault_supabase_url
+      - vault_supabase_key is defined and 'YOUR-' not in vault_supabase_key
+      - vault_supabase_anon_key is defined and 'YOUR-' not in vault_supabase_anon_key
+      - vault_service_api_key is defined and vault_service_api_key | length >= 32
+    fail_msg: >-
+      Missing settings. Create group_vars/all/vault.yml from vault.yml.example,
+      fill in real values, encrypt it with ansible-vault, and make sure Terraform
+      generated inventory/hosts.ini (it sets sentra_domain).
+    quiet: true
+
+- name: Create application directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  loop:
+    - "{{ sentra_app_dir }}"
+    - "{{ sentra_app_dir }}/src"
+
+- name: Fetch Sentra-Web
+  ansible.builtin.git:
+    repo: "{{ sentra_web_repo }}"
+    dest: "{{ sentra_app_dir }}/src/Sentra-Web"
+    version: "{{ sentra_web_branch }}"
+    force: true
+  become: true
+  become_user: "{{ ansible_user }}"
+
+- name: Fetch Sentra-AI-Model
+  ansible.builtin.git:
+    repo: "{{ sentra_ai_repo }}"
+    dest: "{{ sentra_app_dir }}/src/Sentra-AI-Model"
+    version: "{{ sentra_ai_branch }}"
+    force: true
+  become: true
+  become_user: "{{ ansible_user }}"
+
+- name: Write configuration (secrets are only readable by the deploy user)
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ sentra_app_dir }}/{{ item.dest }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { src: docker-compose.yml.j2, dest: docker-compose.yml, mode: "0644" }
+    - { src: Caddyfile.j2, dest: Caddyfile, mode: "0644" }
+    - { src: backend.env.j2, dest: backend.env, mode: "0600" }
+    - { src: ai.env.j2, dest: ai.env, mode: "0600" }
+    - { src: compose.env.j2, dest: .env, mode: "0600" }
+  no_log: true
+
+# The first build downloads PyTorch and can take 10+ minutes, so run it
+# asynchronously to survive slow networks and SSH hiccups.
+- name: Build images and start containers
+  ansible.builtin.command: docker compose up -d --build --remove-orphans
+  args:
+    chdir: "{{ sentra_app_dir }}"
+  become: true
+  become_user: "{{ ansible_user }}"
+  async: 3600
+  poll: 15
+  register: sentra_compose_up
+  changed_when: true
+
+- name: Remove dangling images from previous builds
+  ansible.builtin.command: docker image prune -f
+  become: true
+  become_user: "{{ ansible_user }}"
+  register: sentra_prune
+  changed_when: "'Total reclaimed space: 0B' not in sentra_prune.stdout"
+
+- name: Wait for HTTPS and the backend to respond
+  ansible.builtin.uri:
+    url: "https://{{ sentra_domain }}/api/health"
+    status_code: 200
+  register: sentra_health
+  until: sentra_health.status == 200
+  retries: 30
+  delay: 10
+  delegate_to: localhost
+  become: false
+
+- name: Deployment summary
+  ansible.builtin.debug:
+    msg:
+      - "Admin dashboard: https://{{ sentra_domain }}"
+      - "Backend health:  https://{{ sentra_domain }}/api/health"
+      - "SentraAI health: https://{{ sentra_domain }}/ai/health (first start downloads OCR models)"

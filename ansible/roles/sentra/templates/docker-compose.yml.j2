@@ -1,0 +1,65 @@
+# {{ ansible_managed }}
+#
+# Sentra production stack:
+#   caddy       - HTTPS (automatic Let's Encrypt) + routing
+#   frontend    - React admin dashboard (static, nginx)
+#   backend     - Flask REST API (Supabase)
+#   ai-service  - SentraAI LPR (FastAPI, YOLOv8, EasyOCR)
+name: sentra
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+      - ai-service
+
+  backend:
+    build: ./src/Sentra-Web/admin_backend
+    restart: unless-stopped
+    env_file: ./backend.env
+    expose:
+      - "5000"
+
+  ai-service:
+    build: ./src/Sentra-AI-Model/service
+    restart: unless-stopped
+    env_file: ./ai.env
+    expose:
+      - "5001"
+    volumes:
+      # Model weights and demo videos live outside the image build context
+      - ./src/Sentra-AI-Model/models:/models:ro
+      - ./src/Sentra-AI-Model/sample_videos:/sample_videos:ro
+      # Keep EasyOCR's downloaded models across restarts
+      - easyocr_models:/home/sentra/.EasyOCR
+    depends_on:
+      - backend
+
+  frontend:
+    build:
+      context: ./src/Sentra-Web/admin_frontend
+      args:
+        VITE_API_URL: https://{{ sentra_domain }}/api
+        VITE_LPR_URL: https://{{ sentra_domain }}/ai
+        VITE_WS_URL: wss://{{ sentra_domain }}/ws
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+    restart: unless-stopped
+    expose:
+      - "80"
+
+volumes:
+  caddy_data:
+  caddy_config:
+  easyocr_models:

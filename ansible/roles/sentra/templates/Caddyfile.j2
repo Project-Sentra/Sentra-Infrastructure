@@ -1,0 +1,39 @@
+# {{ ansible_managed }}
+{% if sentra_acme_email %}
+{
+	email {{ sentra_acme_email }}
+}
+{% endif %}
+
+{{ sentra_domain }} {
+	encode zstd gzip
+
+	# SentraAI WebSocket: /ws?token=... -> ai-service /api/ws?token=...
+	handle /ws {
+		rewrite * /api{uri}
+		reverse_proxy ai-service:5001
+	}
+
+	# SentraAI HTTP API: /ai/health -> ai-service /api/health
+	handle_path /ai/* {
+		rewrite * /api{uri}
+		reverse_proxy ai-service:5001
+	}
+
+	# Flask backend
+	handle /api/* {
+		reverse_proxy backend:5000
+	}
+
+	# React admin dashboard (SPA; nginx serves index.html for client routes)
+	handle {
+		reverse_proxy frontend:80
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
