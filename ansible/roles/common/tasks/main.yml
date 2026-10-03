@@ -20,7 +20,7 @@
     content: |
       APT::Periodic::Update-Package-Lists "1";
       APT::Periodic::Unattended-Upgrade "1";
-    mode: "0644"
+    mode: "0644"  # NOSONAR - apt config is read by non-root apt tools; contains no secrets
 
 - name: Read current timezone
   ansible.builtin.command: timedatectl show --property=Timezone --value

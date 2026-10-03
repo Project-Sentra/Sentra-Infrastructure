@@ -8,13 +8,13 @@
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
-    mode: "0755"
+    mode: "0755"  # NOSONAR - apt's _apt user must read the keyrings
 
 - name: Add Docker's apt signing key
   ansible.builtin.get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
     dest: /etc/apt/keyrings/docker.asc
-    mode: "0644"
+    mode: "0644"  # NOSONAR - public signing key; apt's _apt user must read it
 
 - name: Add Docker apt repository
   ansible.builtin.apt_repository:
@@ -43,7 +43,7 @@
         "log-driver": "json-file",
         "log-opts": { "max-size": "10m", "max-file": "3" }
       }
-    mode: "0644"
+    mode: "0644"  # NOSONAR - Docker daemon config; contains no secrets
   notify: Restart docker
 
 - name: Start Docker on boot

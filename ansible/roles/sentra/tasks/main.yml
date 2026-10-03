@@ -19,7 +19,7 @@
     state: directory
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    mode: "0755"
+    mode: "0755"  # NOSONAR - containers with other uids read code/models; secrets are 0600
   loop:
     - "{{ sentra_app_dir }}"
     - "{{ sentra_app_dir }}/src"

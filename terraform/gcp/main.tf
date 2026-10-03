@@ -120,7 +120,7 @@ resource "google_compute_instance" "main" {
   network_interface {
     subnetwork = google_compute_subnetwork.main.id
 
-    access_config {
+    access_config { # NOSONAR - public web server; firewall allows only 80/443 (+ SSH by key)
       nat_ip = google_compute_address.main.address
     }
   }
