@@ -64,7 +64,7 @@ jobs:
 
       - name: Install Ansible
         run: |
-          pip install --only-binary :all: -r ../.github/ci-requirements.txt
+          pip install --require-hashes --only-binary :all: -r ../.github/ci-requirements.txt
 
       - name: Syntax check
         run: |
