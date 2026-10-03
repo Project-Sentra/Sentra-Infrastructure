@@ -176,3 +176,26 @@ The static IP survives VM stop/start, so the domain and certificate keep working
 
 `.github/workflows/terraform.yml` runs `terraform fmt`/`validate` and Ansible syntax check +
 `ansible-lint` on every push and pull request. It needs no cloud credentials.
+
+## Continuous deployment
+
+Sentra-Web and Sentra-AI-Model each have a **Deploy to GCP** workflow. When CI passes on
+`main`, it SSHes into the VM, checks out the tested commit, rebuilds only that repo's
+containers and runs a health check. Ansible is still used for the first setup, for
+secrets and for server changes.
+
+One-time setup:
+
+```bash
+ssh-keygen -t ed25519 -N "" -f ~/.ssh/sentra_ci_deploy -C "sentra-ci-deploy"
+# terraform.tfvars: ci_deploy_public_key_path = "~/.ssh/sentra_ci_deploy.pub"
+terraform -chdir=terraform/gcp apply          # adds the key to the VM (in place)
+
+for repo in Sentra-Web Sentra-AI-Model; do
+  gh secret set GCP_HOST        -R Project-Sentra/$repo --body "<external_ip>"
+  gh secret set GCP_KNOWN_HOSTS -R Project-Sentra/$repo --body "$(ssh-keyscan -t ed25519 <external_ip>)"
+  gh secret set GCP_SSH_KEY     -R Project-Sentra/$repo < ~/.ssh/sentra_ci_deploy
+done
+```
+
+To revoke CI access, remove `ci_deploy_public_key_path` and run `terraform apply`.

@@ -45,6 +45,12 @@ variable "ssh_public_key_path" {
   default     = "~/.ssh/sentra_gcp.pub"
 }
 
+variable "ci_deploy_public_key_path" {
+  description = "Optional public key for the GitHub Actions deploy workflows (no passphrase). Empty = none."
+  type        = string
+  default     = ""
+}
+
 variable "ssh_private_key_path" {
   description = "Path to the matching SSH private key (only written into the Ansible inventory)"
   type        = string

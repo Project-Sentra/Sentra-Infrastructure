@@ -15,6 +15,11 @@ boot_disk_size_gb = 40
 ssh_public_key_path  = "~/.ssh/sentra_gcp.pub"
 ssh_private_key_path = "~/.ssh/sentra_gcp"
 
+# Optional: key used by the GitHub Actions deploy workflows (Sentra-Web and
+# Sentra-AI-Model). Create without a passphrase:
+#   ssh-keygen -t ed25519 -N "" -f ~/.ssh/sentra_ci_deploy -C "sentra-ci-deploy"
+# ci_deploy_public_key_path = "~/.ssh/sentra_ci_deploy.pub"
+
 # Restrict SSH to your own IP for better security (curl -4 ifconfig.me).
 # Home ISPs often change your IP; if SSH stops working, update and re-apply.
 ssh_source_ranges = ["0.0.0.0/0"]

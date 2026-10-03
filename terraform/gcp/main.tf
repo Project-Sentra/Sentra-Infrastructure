@@ -120,7 +120,13 @@ resource "google_compute_instance" "main" {
 
   metadata = {
     # Key-only SSH for the deploy user; ignore project-wide keys
-    ssh-keys               = "${var.ssh_user}:${trimspace(file(pathexpand(var.ssh_public_key_path)))}"
+    # (plus the optional CI deploy key used by the GitHub deploy workflows)
+    ssh-keys = join("\n", [
+      for key in compact([
+        trimspace(file(pathexpand(var.ssh_public_key_path))),
+        var.ci_deploy_public_key_path == "" ? "" : trimspace(file(pathexpand(var.ci_deploy_public_key_path))),
+      ]) : "${var.ssh_user}:${key}"
+    ])
     block-project-ssh-keys = "true"
     enable-oslogin         = "FALSE"
   }
