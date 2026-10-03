@@ -168,8 +168,10 @@ resource "aws_instance" "main" {
     environment    = var.environment
     project_name   = var.project_name
     ecr_registry   = var.ecr_registry
-    supabase_url   = var.supabase_url
-    supabase_key   = var.supabase_key
+    supabase_url      = var.supabase_url
+    supabase_key      = var.supabase_key
+    service_api_key   = var.service_api_key
+    stripe_secret_key = var.stripe_secret_key
   }))
 
   tags = {

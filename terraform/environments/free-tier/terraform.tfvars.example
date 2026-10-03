@@ -8,9 +8,15 @@ key_name    = "sentra-free-key"  # Your EC2 key pair name
 # Find your IP: curl ifconfig.me
 ssh_allowed_cidrs = ["YOUR_IP/32"]  # e.g., ["203.0.113.50/32"]
 
-# Supabase credentials
+# Supabase credentials (server-side: use the SERVICE ROLE key, not the anon key)
 supabase_url = "https://your-project.supabase.co"
-supabase_key = "your-supabase-anon-key"
+supabase_key = "your-supabase-service-role-key"
+
+# Shared secret between SentraAI and the backend. Generate with: openssl rand -hex 32
+service_api_key = "replace-with-64-hex-chars"
+
+# Stripe secret key for wallet top-ups
+stripe_secret_key = "sk_test_..."
 
 # GitHub username/org for CI/CD
 github_org = "your-github-username"

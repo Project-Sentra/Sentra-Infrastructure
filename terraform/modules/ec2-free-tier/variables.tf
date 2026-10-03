@@ -51,6 +51,17 @@ variable "supabase_key" {
   sensitive = true
 }
 
+variable "service_api_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "stripe_secret_key" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
 variable "alb_security_group_id" {
   description = "Security group ID of the ALB (for restricting EC2 HTTP access)"
   type        = string

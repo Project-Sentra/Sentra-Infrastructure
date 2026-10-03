@@ -32,6 +32,8 @@ chown -R sentra:sentra /opt/sentra
 cat > /opt/sentra/.env << 'ENVFILE'
 SUPABASE_URL=${supabase_url}
 SUPABASE_KEY=${supabase_key}
+SERVICE_API_KEY=${service_api_key}
+STRIPE_SECRET_KEY=${stripe_secret_key}
 ENVIRONMENT=${environment}
 AWS_REGION=${aws_region}
 ECR_REGISTRY=${ecr_registry}
@@ -72,6 +74,9 @@ services:
     environment:
       - SUPABASE_URL=$${SUPABASE_URL}
       - SUPABASE_KEY=$${SUPABASE_KEY}
+      - SERVICE_API_KEY=$${SERVICE_API_KEY}
+      - STRIPE_SECRET_KEY=$${STRIPE_SECRET_KEY}
+      - LPR_SERVICE_URL=http://sentra-ai-service:5001
       - ENVIRONMENT=$${ENVIRONMENT}
     restart: unless-stopped
     networks:
@@ -82,6 +87,8 @@ services:
     container_name: sentra-ai-service
     environment:
       - PARKING_API_URL=http://backend:5000
+      - SERVICE_API_KEY=$${SERVICE_API_KEY}
+      - FACILITY_ID=1
       - ENVIRONMENT=$${ENVIRONMENT}
       - MIN_CONFIDENCE=0.5
       - AUTO_ENTRY_EXIT=false

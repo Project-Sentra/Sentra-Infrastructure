@@ -31,9 +31,22 @@ variable "supabase_url" {
 }
 
 variable "supabase_key" {
-  description = "Supabase API Key"
+  description = "Supabase service-role key (server-side only; never ship it to clients)"
   type        = string
   sensitive   = true
+}
+
+variable "service_api_key" {
+  description = "Shared secret between SentraAI and the backend (X-Service-Key). Generate with: openssl rand -hex 32"
+  type        = string
+  sensitive   = true
+}
+
+variable "stripe_secret_key" {
+  description = "Stripe secret key for wallet top-ups (sk_test_... / sk_live_...)"
+  type        = string
+  sensitive   = true
+  default     = ""
 }
 
 variable "github_org" {
