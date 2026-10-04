@@ -5,7 +5,7 @@
 }
 {% endif %}
 
-{{ ([sentra_domain] + sentra_extra_domains) | join(', ') }} {
+{{ ([sentra_domain] + (sentra_extra_domains | default([]))) | join(', ') }} {
 	encode zstd gzip
 
 	# SentraAI WebSocket: /ws?token=... -> ai-service /api/ws?token=...
