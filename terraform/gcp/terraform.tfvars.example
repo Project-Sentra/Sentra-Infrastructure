@@ -1,0 +1,30 @@
+# Copy to terraform.tfvars (gitignored) and adjust.
+
+project_id = "sentra-parking-510509"
+
+# Mumbai, closest region to Sri Lanka
+region = "asia-south1"
+zone   = "asia-south1-a"
+
+# 2 vCPU / 8 GB. Roughly USD 60/month incl. disk + IP, covered by the
+# USD 300 free-trial credit. Check the GCP pricing calculator for exact numbers.
+machine_type      = "e2-standard-2"
+boot_disk_size_gb = 40
+
+# SSH key pair created with: ssh-keygen -t ed25519 -f ~/.ssh/sentra_gcp
+ssh_public_key_path  = "~/.ssh/sentra_gcp.pub"
+ssh_private_key_path = "~/.ssh/sentra_gcp"
+
+# Optional: key used by the GitHub Actions deploy workflows (Sentra-Web and
+# Sentra-AI-Model). Create without a passphrase:
+#   ssh-keygen -t ed25519 -N "" -f ~/.ssh/sentra_ci_deploy -C "sentra-ci-deploy"
+# ci_deploy_public_key_path = "~/.ssh/sentra_ci_deploy.pub"
+
+# Restrict SSH to your own IP for better security (curl -4 ifconfig.me).
+# Home ISPs often change your IP; if SSH stops working, update and re-apply.
+ssh_source_ranges = ["0.0.0.0/0"]
+
+# Leave empty to use the free automatic name <ip>.sslip.io (works immediately,
+# real HTTPS). Set a real domain once its DNS A record points at external_ip.
+domain = ""
+# domain = "sentra.theenuka.xyz"

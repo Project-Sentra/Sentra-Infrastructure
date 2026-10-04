@@ -1,0 +1,22 @@
+---
+# Secrets for the deployment. Create the real (encrypted) file with:
+#
+#   cp group_vars/all/vault.yml.example group_vars/all/vault.yml
+#   # edit the values, then:
+#   ansible-vault encrypt group_vars/all/vault.yml
+#
+# vault.yml is gitignored. Edit it later with: ansible-vault edit group_vars/all/vault.yml
+
+# Supabase project (Dashboard → Settings → API)
+vault_supabase_url: "https://YOUR-PROJECT.supabase.co"
+# Server-side key for the Flask backend. Use the SERVICE ROLE key once the
+# RLS policies are applied (the anon key only works while RLS is permissive).
+vault_supabase_key: "YOUR-SUPABASE-SERVICE-ROLE-KEY"
+# Public anon key, baked into the admin dashboard for Google sign-in
+vault_supabase_anon_key: "YOUR-SUPABASE-ANON-KEY"
+
+# Shared secret between SentraAI and the backend. Generate: openssl rand -hex 32
+vault_service_api_key: "REPLACE-WITH-64-HEX-CHARS"
+
+# Stripe secret key (sk_test_...). Leave empty to disable wallet top-ups.
+vault_stripe_secret_key: ""

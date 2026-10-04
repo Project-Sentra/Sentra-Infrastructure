@@ -1,0 +1,67 @@
+---
+# Docker Engine + Compose plugin from Docker's official apt repository
+- name: Map CPU architecture to Debian naming
+  ansible.builtin.set_fact:
+    docker_deb_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_architecture] | default(ansible_architecture) }}"
+
+- name: Create apt keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"  # NOSONAR - apt's _apt user must read the keyrings
+
+- name: Add Docker's apt signing key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"  # NOSONAR - public signing key; apt's _apt user must read it
+
+- name: Add Docker apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ docker_deb_arch }} signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    filename: docker
+    state: present
+
+- name: Install Docker Engine and Compose plugin
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Rotate container logs so they cannot fill the disk
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "10m", "max-file": "3" }
+      }
+    mode: "0644"  # NOSONAR - Docker daemon config; contains no secrets
+  notify: Restart docker
+
+- name: Start Docker on boot
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Let the deploy user run docker without sudo
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Apply pending Docker restarts now
+  ansible.builtin.meta: flush_handlers
+
+# The existing SSH session keeps its old groups; reconnect so the new
+# docker group membership applies to the deploy tasks that follow.
+- name: Reconnect so the docker group takes effect
+  ansible.builtin.meta: reset_connection

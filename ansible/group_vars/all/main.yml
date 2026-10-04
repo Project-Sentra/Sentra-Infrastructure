@@ -1,0 +1,38 @@
+---
+# Non-secret deployment settings. Secrets live in vault.yml (ansible-vault).
+
+# Where the app lives on the VM
+sentra_app_dir: /opt/sentra
+
+# Git sources (public repos). Deploy a feature branch by overriding, e.g.
+#   ansible-playbook site.yml --ask-vault-pass -e sentra_git_branch=fix/phase1-security
+sentra_git_branch: main
+sentra_web_repo: https://github.com/Project-Sentra/Sentra-Web.git
+sentra_web_branch: "{{ sentra_git_branch }}"
+sentra_ai_repo: https://github.com/Project-Sentra/Sentra-AI-Model.git
+sentra_ai_branch: "{{ sentra_git_branch }}"
+
+# Public domain (written into the inventory by Terraform)
+# sentra_domain: 34.100.1.2.sslip.io
+
+# Optional e-mail for Let's Encrypt expiry notices
+sentra_acme_email: ""
+
+# --- SentraAI settings ---------------------------------------------------
+sentra_facility_id: 1
+# simulated = loop sample videos; live = real RTSP cameras
+sentra_camera_mode: simulated
+sentra_entry_camera_source: /sample_videos/sample_video_2.mp4
+sentra_exit_camera_source: /sample_videos/sample_video_2.mp4
+sentra_min_confidence: 0.4
+sentra_detection_cooldown: 3
+# false = operator confirms each entry/exit in the dashboard
+sentra_auto_entry_exit: false
+sentra_frame_skip: 2
+sentra_frame_width: 640
+sentra_frame_height: 480
+sentra_jpeg_quality: 80
+
+# Swap helps PyTorch builds and spikes on small VMs
+sentra_swap_size_mb: 4096
+sentra_timezone: Asia/Colombo

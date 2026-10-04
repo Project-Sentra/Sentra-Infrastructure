@@ -1,0 +1,30 @@
+---
+# Configure the Sentra VM and deploy the application.
+#
+#   ansible-playbook site.yml --ask-vault-pass
+#
+# Run only part of it with tags, e.g. redeploy the app after a git push:
+#   ansible-playbook site.yml --ask-vault-pass --tags deploy
+
+- name: Configure and deploy Sentra
+  hosts: sentra
+  become: true
+  gather_facts: false
+
+  pre_tasks:
+    - name: Wait for the VM to accept SSH (fresh VMs take a minute to boot)
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+      tags: always
+
+    - name: Gather facts
+      ansible.builtin.setup:
+      tags: always
+
+  roles:
+    - role: common
+      tags: [common]
+    - role: docker
+      tags: [docker]
+    - role: sentra
+      tags: [deploy]

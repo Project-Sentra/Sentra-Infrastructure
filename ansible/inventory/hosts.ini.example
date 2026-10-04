@@ -1,0 +1,9 @@
+# terraform/gcp writes the real inventory to inventory/hosts.ini automatically.
+# Only create it by hand if you are deploying to a server Terraform did not create.
+
+[sentra]
+sentra-server ansible_host=203.0.113.10 ansible_user=sentra ansible_ssh_private_key_file=~/.ssh/sentra_gcp
+
+[sentra:vars]
+# Public domain for HTTPS. <ip>.sslip.io works without any DNS setup.
+sentra_domain=203.0.113.10.sslip.io
