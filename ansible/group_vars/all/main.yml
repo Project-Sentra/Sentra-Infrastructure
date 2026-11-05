@@ -20,6 +20,9 @@ sentra_acme_email: ""
 # sentra_extra_domains: additional names served by Caddy. Set by Terraform in
 # the inventory (the sslip.io backup address when a custom domain is used).
 # Not defaulted here: group_vars/all would override the inventory value.
+# sentra_image_registry: Artifact Registry path (set by Terraform in the
+# inventory). When set, the server pulls images built by GitHub Actions
+# instead of building them; leave unset to build on the server.
 
 # --- SentraAI settings ---------------------------------------------------
 sentra_facility_id: 1

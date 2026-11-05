@@ -5,6 +5,13 @@
 #   frontend    - React admin dashboard (static, nginx)
 #   backend     - Flask REST API (Supabase)
 #   ai-service  - SentraAI LPR (FastAPI, YOLOv8, EasyOCR)
+#
+{% if sentra_image_registry | default('') %}
+# Images come from Artifact Registry ({{ sentra_image_registry }}), built by
+# GitHub Actions. WEB_TAG / AI_TAG pin a commit; the default is "latest".
+{% else %}
+# No image registry configured: images are built on this server.
+{% endif %}
 name: sentra
 
 services:
@@ -25,14 +32,22 @@ services:
       - ai-service
 
   backend:
+{% if sentra_image_registry | default('') %}
+    image: {{ sentra_image_registry }}/backend:${WEB_TAG:-latest}
+{% else %}
     build: ./src/Sentra-Web/admin_backend
+{% endif %}
     restart: unless-stopped
     env_file: ./backend.env
     expose:
       - "5000"
 
   ai-service:
+{% if sentra_image_registry | default('') %}
+    image: {{ sentra_image_registry }}/ai-service:${AI_TAG:-latest}
+{% else %}
     build: ./src/Sentra-AI-Model/service
+{% endif %}
     restart: unless-stopped
     env_file: ./ai.env
     expose:
@@ -47,6 +62,10 @@ services:
       - backend
 
   frontend:
+{% if sentra_image_registry | default('') %}
+    # Built in CI for https://{{ sentra_domain }} (see Sentra-Web cd.yml)
+    image: {{ sentra_image_registry }}/frontend:${WEB_TAG:-latest}
+{% else %}
     build:
       context: ./src/Sentra-Web/admin_frontend
       args:
@@ -55,6 +74,7 @@ services:
         VITE_WS_URL: wss://{{ sentra_domain }}/ws
         VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+{% endif %}
     restart: unless-stopped
     expose:
       - "80"
