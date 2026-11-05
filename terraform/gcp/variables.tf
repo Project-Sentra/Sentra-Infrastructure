@@ -68,3 +68,15 @@ variable "domain" {
   type        = string
   default     = ""
 }
+
+variable "github_owner" {
+  description = "GitHub organisation that owns the Sentra repositories"
+  type        = string
+  default     = "Project-Sentra"
+}
+
+variable "github_repos" {
+  description = "Repositories whose main-branch workflows may push images"
+  type        = list(string)
+  default     = ["Sentra-Web", "Sentra-AI-Model"]
+}

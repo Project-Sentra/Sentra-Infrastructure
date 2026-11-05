@@ -180,23 +180,59 @@ The static IP survives VM stop/start, so the domain and certificate keep working
 
 ## Continuous deployment
 
-Sentra-Web and Sentra-AI-Model each have a **Deploy to GCP** workflow. When CI passes on
-`main`, it SSHes into the VM, checks out the tested commit, rebuilds only that repo's
-containers and runs a health check. Ansible is still used for the first setup, for
-secrets and for server changes.
+```
+push to main ─▶ CI passes ─▶ Deploy to GCP workflow
+                               ├─ build images ─▶ Artifact Registry (asia-south1)
+                               │    (keyless: Workload Identity Federation)
+                               └─ SSH to VM ─▶ docker compose pull + up (exact commit tag)
+```
 
-One-time setup:
+Sentra-Web and Sentra-AI-Model each have a **Deploy to GCP** workflow. When CI passes on
+`main`, GitHub Actions builds the images, pushes them to **Artifact Registry** tagged with the
+commit and `latest`, then SSHes into the VM, which pulls that exact tag and restarts only that
+repository's containers.
+
+- **No stored Google keys.** GitHub's OIDC token is exchanged for a 1-hour token through
+  Workload Identity Federation. Only `Sentra-Web` and `Sentra-AI-Model`, and only workflows on
+  `main`, may use it (`terraform/gcp/registry.tf`).
+- The CI service account can only push and pull in the `sentra` repository.
+- **The VM still has no Google credentials.** Each deploy hands it the job's short-lived token,
+  and Ansible borrows one from your `gcloud` login.
+- The registry keeps the 5 newest versions of each image, so you can roll back with
+  `WEB_TAG=<sha> docker compose up -d backend frontend` on the VM.
+- Without `GCP_IMAGE_REGISTRY` set, the workflows build on the VM instead (the old behaviour).
+
+### One-time setup
 
 ```bash
-ssh-keygen -t ed25519 -N "" -f ~/.ssh/sentra_ci_deploy -C "sentra-ci-deploy"
-# terraform.tfvars: ci_deploy_public_key_path = "~/.ssh/sentra_ci_deploy.pub"
-terraform -chdir=terraform/gcp apply          # adds the key to the VM (in place)
+# 1. Registry, keyless GitHub access and the push-only service account
+terraform -chdir=terraform/gcp apply
 
+# 2. CI deploy SSH key (if not done yet)
+ssh-keygen -t ed25519 -N "" -f ~/.ssh/sentra_ci_deploy -C "sentra-ci-deploy"
+# terraform.tfvars: ci_deploy_public_key_path = "~/.ssh/sentra_ci_deploy.pub", then apply again
+
+# 3. GitHub configuration (values come from terraform output)
+cd terraform/gcp
+REG=$(terraform output -raw image_registry)
+WIF=$(terraform output -raw github_wif_provider)
+SA=$(terraform output -raw ci_service_account)
 for repo in Sentra-Web Sentra-AI-Model; do
+  gh variable set GCP_IMAGE_REGISTRY     -R Project-Sentra/$repo --body "$REG"
+  gh variable set GCP_WIF_PROVIDER       -R Project-Sentra/$repo --body "$WIF"
+  gh variable set GCP_CI_SERVICE_ACCOUNT -R Project-Sentra/$repo --body "$SA"
   gh secret set GCP_HOST        -R Project-Sentra/$repo --body "<external_ip>"
   gh secret set GCP_KNOWN_HOSTS -R Project-Sentra/$repo --body "$(ssh-keyscan -t ed25519 <external_ip>)"
   gh secret set GCP_SSH_KEY     -R Project-Sentra/$repo < ~/.ssh/sentra_ci_deploy
 done
+# The dashboard image is built in CI, so it needs the public build values:
+gh variable set SENTRA_DOMAIN          -R Project-Sentra/Sentra-Web --body "sentra.theenuka.in"
+gh variable set VITE_SUPABASE_URL      -R Project-Sentra/Sentra-Web --body "https://<project>.supabase.co"
+gh variable set VITE_SUPABASE_ANON_KEY -R Project-Sentra/Sentra-Web --body "<anon key>"
+
+# 4. After the first images are pushed, switch the VM to registry mode
+cd ../../ansible && ansible-playbook site.yml --ask-vault-pass --tags deploy
 ```
 
+Until step 4 runs, deploys still build on the VM, so nothing breaks during the switch.
 To revoke CI access, remove `ci_deploy_public_key_path` and run `terraform apply`.

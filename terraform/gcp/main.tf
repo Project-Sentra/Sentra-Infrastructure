@@ -174,5 +174,6 @@ resource "local_file" "ansible_inventory" {
     [sentra:vars]
     sentra_domain=${local.domain}
     sentra_extra_domains=${jsonencode(local.extra_domains)}
+    sentra_image_registry=${google_artifact_registry_repository.images.location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.images.repository_id}
   EOT
 }

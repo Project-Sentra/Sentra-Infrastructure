@@ -58,10 +58,47 @@
   register: sentra_config
   no_log: true
 
+# --- Registry mode: pull the images GitHub Actions built -------------------
+# The VM has no Google credentials of its own. Ansible borrows a 1-hour
+# access token from the operator's gcloud login on the control machine.
+- name: Get a short-lived Artifact Registry token from the local gcloud login
+  ansible.builtin.command: gcloud auth print-access-token
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: sentra_registry_token
+  changed_when: false
+  no_log: true
+  when: sentra_image_registry | default('')
+
+- name: Log the server in to Artifact Registry
+  ansible.builtin.command:
+    cmd: docker login -u oauth2accesstoken --password-stdin https://{{ sentra_image_registry.split('/')[0] }}
+    stdin: "{{ sentra_registry_token.stdout }}"
+  become: true
+  become_user: "{{ ansible_user }}"
+  changed_when: false
+  no_log: true
+  when: sentra_image_registry | default('')
+
+- name: Pull the latest images
+  ansible.builtin.command: docker compose pull --quiet
+  args:
+    chdir: "{{ sentra_app_dir }}"
+  become: true
+  become_user: "{{ ansible_user }}"
+  async: 1800
+  poll: 10
+  changed_when: true
+  when: sentra_image_registry | default('')
+
+# --- Build mode (no registry): build on the server -------------------------
 # The first build downloads PyTorch and can take 10+ minutes, so run it
 # asynchronously to survive slow networks and SSH hiccups.
-- name: Build images and start containers
-  ansible.builtin.command: docker compose up -d --build --remove-orphans
+- name: Start containers
+  ansible.builtin.command: >-
+    docker compose up -d --remove-orphans
+    {{ '--no-build' if (sentra_image_registry | default('')) else '--build' }}
   args:
     chdir: "{{ sentra_app_dir }}"
   become: true
