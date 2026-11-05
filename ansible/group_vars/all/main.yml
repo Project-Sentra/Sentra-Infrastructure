@@ -17,6 +17,9 @@ sentra_ai_branch: "{{ sentra_git_branch }}"
 
 # Optional e-mail for Let's Encrypt expiry notices
 sentra_acme_email: ""
+# sentra_extra_domains: additional names served by Caddy. Set by Terraform in
+# the inventory (the sslip.io backup address when a custom domain is used).
+# Not defaulted here: group_vars/all would override the inventory value.
 
 # --- SentraAI settings ---------------------------------------------------
 sentra_facility_id: 1

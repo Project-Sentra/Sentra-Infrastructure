@@ -10,6 +10,9 @@ locals {
   web_tag = "${var.name_prefix}-web"
   ssh_tag = "${var.name_prefix}-ssh"
   domain  = var.domain != "" ? var.domain : "${google_compute_address.main.address}.sslip.io"
+  # With a custom domain the sslip.io name keeps working as a backup address
+  # (deploy health checks use it); without one there is nothing extra.
+  extra_domains = var.domain != "" ? ["${google_compute_address.main.address}.sslip.io"] : []
 }
 
 # Make sure the Compute Engine API is on (no-op if already enabled)
@@ -170,5 +173,6 @@ resource "local_file" "ansible_inventory" {
 
     [sentra:vars]
     sentra_domain=${local.domain}
+    sentra_extra_domains=${jsonencode(local.extra_domains)}
   EOT
 }

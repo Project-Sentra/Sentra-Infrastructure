@@ -119,7 +119,8 @@ Outputs include the static IP, the HTTPS URL and an SSH command. Terraform also 
 **Domain:** with `domain = ""` the free name `<ip>.sslip.io` is used. It resolves to your
 IP with no DNS setup and gets a real HTTPS certificate. To use your own domain, create a DNS
 **A record** pointing to `external_ip`, set `domain` in `terraform.tfvars`, and run
-`terraform apply` again.
+`terraform apply` again, then redeploy with Ansible. The `<ip>.sslip.io` name keeps
+working as a backup address (the deploy workflows' health checks use it).
 
 ### 2. Configure the server and deploy Sentra (Ansible)
 
